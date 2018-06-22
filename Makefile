@@ -23,9 +23,18 @@ MIGRATIONS_PATH := data/upgrade
 MODULE_ASSETS := $(shell find app/libraries -type d -name 'assets')
 MODULE_ASSETS_LINKS := $(subst _,-,$(patsubst %/,%,$(subst app/libraries/,assets/,$(dir $(MODULE_ASSETS)))))
 
+MODULE_MIGRATIONS := $(shell find app/libraries -type f -path '*/data/upgrade/*.sql')
+MODULE_MIGRATIONS_LINKS := $(addprefix $(MIGRATIONS_PATH)/,$(notdir $(MODULE_MIGRATIONS)))
+
 # These files will be checked for translatable strings. When they
 # are modified strings will be re-extracted.
 EXTRACT_SOURCES := $(shell bash -c "find app/{views,config,documents,models,controllers,extensions,mails} -name '*.php'")
+
+ifeq ($(DB_PASSWORD),)
+MYSQL := mysql -u$(DB_USER) -p$(DB_PASSWORD)
+else
+MYSQL := mysql -u$(DB_USER)
+endif
 
 # -- Integrator/Creator --
 
@@ -67,6 +76,23 @@ assets/app:
 
 assets/%: | app/composer.lock
 	ln -s ../app/libraries/$(subst -,_,$*)/assets $@
+
+# -- Migrations --
+
+.PHONY: link-migrations
+link-migrations: $(MODULE_MIGRATIONS_LINKS)
+
+# Derive source name by wildcarding using the stem. There should only ever be
+# one match anyway, as we'd otherwise end up with dupes in the target directory,
+# that keeps files without any hierachy flattened.
+data/upgrade/%: 
+	ln -s ../../$(shell find app/libraries -type f -path '*/data/upgrade/*' -name $* -print -quit) $@
+
+# Performs database initialization. Migrations are stored in data/upgrade
+# where they can also be picked up by a schema migration tool. 
+.PHONY: db-init
+db-init: $(MODULE_MIGRATIONS_LINKS)
+	find data/upgrade -name "*.sql" -exec sh -c "$(MYSQL) $(DB_DATABASE) < {}" \;
 
 # -- Translations --
 #
