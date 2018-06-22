@@ -4,10 +4,7 @@
 # Use of this source code is governed by a BSD-style
 # license that can be found in the LICENSE file.
 
-NAME ?= $(shell basename $(CURDIR))
-DOMAIN ?= $(subst _,-,$(NAME)).test
-
-SECRET_BASE ?= $(shell openssl rand -base64 60 | tr -d '\n')
+include Envfile
 
 # Used when building the project, allowed to be overwritten, so external scripts
 # may pick a unique or simply different location where they want to process
@@ -33,9 +30,10 @@ install: prefill app/resources/g11n/cldr app/composer.lock link-assets fix-perms
 
 .PHONY: prefill
 prefill: 
-	sed -i -e "s|__NAME__|$(NAME)|g" Hoifile Envfile Deployfile
-	sed -i -e "s|__DOMAIN__|$(DOMAIN)|g" Hoifile Envfile
-	sed -i -e "s|__SECRET_BASE__|$(SECRET_BASE)|g" Envfile
+	sed -i -e "s|__NAME__|$(shell basename $(CURDIR))|g" Hoifile Envfile Deployfile
+	sed -i -e "s|__DOMAIN__|$(subst _,-,$(shell basename $(CURDIR))).test|g" Hoifile Envfile
+	sed -i -e "s|__SECRET_BASE__|$(shell openssl rand -base64 60 | tr -d '\n')|g" Envfile
+	# In Development environments this password is simply empty.
 	sed -i -e "s|__DB_PASSWORD__||g" Hoifile Envfile 
 	# Some sed leave stray files.
 	rm -f Hoifile-e Envfile-e Deployfile-e
@@ -79,7 +77,7 @@ app/resources/g11n/po/message.pot: $(EXTRACT_SOURCES)
 		--from-code=utf-8 \
 		--keyword=t \
 		--keyword=tn:1,2 \
-		--package-name=$(NAME) \
+		--package-name=$(shell basename $(CURDIR)) \
 		--copyright-holder="Atelier Disko" \
 		--msgid-bugs-address="info@atelierdisko.de"
 	sed -i -e 's/CHARSET/UTF-8/' $@
