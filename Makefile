@@ -13,21 +13,26 @@ include Envfile
 BUILD_PATH ?= /tmp/build
 
 # Base path for assets, here to make it easy to change.
-ASSETS_PATH = app/assets
+ASSETS_PATH := app/assets
+
+# Place where all migrations are read from.
+MIGRATIONS_PATH := data/upgrade
 
 # Asset directories that need to be linked from modules. Derives scored target versions
-# from underscored module name sources.
-MODULE_ASSETS_LINKS = $(subst _,-,$(patsubst %/,%,$(subst app/libraries/,assets/,$(dir $(shell find app/libraries -type d -name 'assets')))))
+# from underscored module name sources to dashed target names.
+MODULE_ASSETS := $(shell find app/libraries -type d -name 'assets')
+MODULE_ASSETS_LINKS := $(subst _,-,$(patsubst %/,%,$(subst app/libraries/,assets/,$(dir $(MODULE_ASSETS)))))
 
 # These files will be checked for translatable strings. When they
 # are modified strings will be re-extracted.
-EXTRACT_SOURCES = $(shell bash -c "find app/{views,config,documents,models,controllers,extensions,mails} -name '*.php'")
+EXTRACT_SOURCES := $(shell bash -c "find app/{views,config,documents,models,controllers,extensions,mails} -name '*.php'")
 
 # -- Integrator/Creator --
 
 .PHONY: install
 install: prefill app/resources/g11n/cldr app/composer.lock link-assets fix-perms
 
+# Special rule which initializes the Envfile (and other) we just included.
 .PHONY: prefill
 prefill: 
 	sed -i -e "s|__NAME__|$(shell basename $(CURDIR))|g" Hoifile Envfile Deployfile
@@ -48,6 +53,12 @@ app/resources/g11n/cldr: /tmp/cldr_180_core.zip
 app/composer.lock:
 	composer install -d app
 
+.PHONY: fix-perms
+fix-perms:
+	chmod -R a+rwX tmp log media media_versions
+
+# --- Assets ---
+
 .PHONY: link-assets
 link-assets: assets/app $(MODULE_ASSETS_LINKS)
 
@@ -56,10 +67,6 @@ assets/app:
 
 assets/%: | app/composer.lock
 	ln -s ../app/libraries/$(subst -,_,$*)/assets $@
-
-.PHONY: fix-perms
-fix-perms:
-	chmod -R a+rwX tmp log media media_versions
 
 # -- Translations --
 #
