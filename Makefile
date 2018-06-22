@@ -85,8 +85,8 @@ app/resources/g11n/po/message.pot: $(EXTRACT_SOURCES)
 		--keyword=t \
 		--keyword=tn:1,2 \
 		--package-name=$(shell basename $(CURDIR)) \
-		--copyright-holder="Atelier Disko" \
-		--msgid-bugs-address="info@atelierdisko.de"
+		--copyright-holder="acme@example.org" \
+		--msgid-bugs-address="bugs@example.org"
 	sed -i -e 's/CHARSET/UTF-8/' $@
 	rm -f $@-e # cleanup stray files
 
