@@ -16,8 +16,8 @@ domain "__DOMAIN__" {
 	www = "drop"
 	# Either paths or special string "!self-signed"
 	SSL = {
-		certificate = "!self-signed"
-		certificateKey = "!self-signed"
+		certificate = "!selfsigned"
+		certificateKey = "!selfsigned"
 	}
 	# auth {
 	# 	password = "__DOMAIN_AUTH_PASSWORD__"
