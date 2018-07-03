@@ -14,10 +14,9 @@ app {
 
 domain "__DOMAIN__" {
 	www = "drop"
-	# Either paths or special string "!self-signed"
 	SSL = {
 		certificate = "!selfsigned"
-		certificateKey = "!selfsigned"
+		certificateKey = "!generate"
 	}
 	# auth {
 	# 	password = "__DOMAIN_AUTH_PASSWORD__"
